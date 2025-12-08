@@ -5,7 +5,9 @@ pool:
   name: Default   # dein Self-Hosted Agent
 
 steps:
+# 1. ZIP erzeugen
 - task: ArchiveFiles@2
+  displayName: 'Archive Function App files'
   inputs:
     rootFolderOrFile: '$(System.DefaultWorkingDirectory)/HttpTriggerCSharp1'
     includeRootFolder: false
@@ -13,12 +15,15 @@ steps:
     archiveFile: '$(Build.ArtifactStagingDirectory)/function.zip'
     replaceExistingArchive: true
 
+# 2. Deploy ZIP in Function App
 - task: AzureFunctionApp@1
+  displayName: 'Deploy Function App'
   inputs:
     azureSubscription: 'az400-connection'
     appType: 'functionApp'
-    appName: 'az400-1-func1'
+    appName: 'az400-1-func1'   # exakt wie im Portal
     package: '$(Build.ArtifactStagingDirectory)/function.zip'
+
 
 
 
