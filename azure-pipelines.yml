@@ -2,15 +2,16 @@ trigger:
 - master
 
 pool:
-  name: Default
+  name: Default   # dein Self-Hosted Agent
 
 steps:
 - task: AzureFunctionApp@1
   inputs:
     azureSubscription: 'az400-connection'
     appType: 'functionApp'
-    appName: 'az400-123456789-web1'
+    appName: 'az400-1-func1'
     package: '$(System.DefaultWorkingDirectory)/HttpTriggerCSharp1'
+
 
 
 
