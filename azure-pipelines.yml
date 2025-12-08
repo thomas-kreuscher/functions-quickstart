@@ -10,5 +10,8 @@ steps:
     azureSubscription: 'az400-connection'
     appType: 'functionApp'
     appName: 'az400-123456789-web1'
-    package: '$(System.DefaultWorkingDirectory)/**/*.zip'
+    package: '$(System.DefaultWorkingDirectory)/HttpTriggerCSharp1'
+
+
+
 
