@@ -16,7 +16,7 @@ steps:
 
 - task: AzureWebApp@1
   inputs:
-    azureSubscription: '<Service Connection Name>'
-    appName: 'az400-123456789-func1'
+    azureSubscription: 'az400-connection'
+    appName: 'az400-123456789-web1'
     package: '$(System.DefaultWorkingDirectory)/**/*.zip'
 
