@@ -2,7 +2,7 @@ trigger:
 - master
 
 pool:
-  vmImage: 'windows-latest'
+  name: Default
 
 steps:
 - task: UseDotNet@2
@@ -19,4 +19,3 @@ steps:
     azureSubscription: 'az400-connection'
     appName: 'az400-123456789-web1'
     package: '$(System.DefaultWorkingDirectory)/**/*.zip'
-
