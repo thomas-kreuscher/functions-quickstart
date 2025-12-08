@@ -1,28 +1,44 @@
 trigger:
-- master
+  branches:
+    include:
+      - master
 
 pool:
-  name: Default   # dein Self-Hosted Agent
+  vmImage: 'windows-latest'
 
 steps:
-# 1. ZIP erzeugen
-- task: ArchiveFiles@2
-  displayName: 'Archive Function App files'
+# 1. Checkout Code
+- task: Checkout@1
   inputs:
-    rootFolderOrFile: '$(System.DefaultWorkingDirectory)/HttpTriggerCSharp1'
-    includeRootFolder: false
-    archiveType: 'zip'
-    archiveFile: '$(Build.ArtifactStagingDirectory)/function.zip'
-    replaceExistingArchive: true
+    clean: true
 
-# 2. Deploy ZIP in Function App
-- task: AzureFunctionApp@1
-  displayName: 'Deploy Function App'
+# 2. Setup .NET SDK
+- task: UseDotNet@2
   inputs:
-    azureSubscription: 'az400-connection'
+    packageType: 'sdk'
+    version: '6.0.x'   # oder 8.0.x je nach Functions-Runtime
+    installationPath: $(Agent.ToolsDirectory)/dotnet
+
+# 3. Restore NuGet Packages
+- script: dotnet restore
+  displayName: 'Restore packages'
+
+# 4. Build Projekt
+- script: dotnet build --configuration Release --output $(Build.ArtifactStagingDirectory)
+  displayName: 'Build project'
+
+# 5. Publish Projekt
+- script: dotnet publish --configuration Release --output $(Build.ArtifactStagingDirectory)/publish
+  displayName: 'Publish project'
+
+# 6. Deploy to Azure Function App
+- task: AzureFunctionApp@1
+  inputs:
+    azureSubscription: 'az400-connection'   # DevOps Service Connection zu Azure
     appType: 'functionApp'
-    appName: 'az400-1-func1'   # exakt wie im Portal
-    package: '$(Build.ArtifactStagingDirectory)/function.zip'
+    appName: 'az400-123456789-func1'
+    package: '$(Build.ArtifactStagingDirectory)/publish'
+
 
 
 
