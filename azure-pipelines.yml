@@ -5,23 +5,10 @@ pool:
   name: Default
 
 steps:
-- task: UseDotNet@2
-  inputs:
-    packageType: 'sdk'
-    version: '8.x'
-    installationPath: $(Agent.ToolsDirectory)/dotnet
-
-- task: DotNetCoreCLI@2
-  inputs:
-    command: 'build'
-    projects: '**/*.csproj'
-    arguments: '--configuration Release'
-
-- script: dotnet build --configuration Release
-  displayName: 'Build project'
-
-- task: AzureWebApp@1
+- task: AzureFunctionApp@1
   inputs:
     azureSubscription: 'az400-connection'
+    appType: 'functionApp'
     appName: 'az400-123456789-web1'
     package: '$(System.DefaultWorkingDirectory)/**/*.zip'
+
