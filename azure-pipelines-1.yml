@@ -10,14 +10,18 @@ steps:
 - script: echo "Deploying commit $(Build.SourceVersion) to Function App"
   displayName: 'Agent-Check'
 
-# Paket erstellen: nur die Function-Dateien zippen
+# Paket erstellen: nur die relevanten Dateien zippen
 - task: ArchiveFiles@2
   inputs:
-    rootFolderOrFile: '$(System.DefaultWorkingDirectory)/HttpTriggerCSharp1'  # oder anderer Funktionsordner
-    includeRootFolder: true
+    rootFolderOrFile: '$(System.DefaultWorkingDirectory)'   # hier liegt host.json
+    includeRootFolder: false
     archiveType: 'zip'
     archiveFile: '$(Build.ArtifactStagingDirectory)/functions.zip'
     replaceExistingArchive: true
+
+# Debug: ZIP-Inhalt prüfen
+- script: powershell -Command "Expand-Archive -Path $(Build.ArtifactStagingDirectory)/functions.zip -DestinationPath $(Build.ArtifactStagingDirectory)/unzipped; Get-ChildItem -Recurse $(Build.ArtifactStagingDirectory)/unzipped"
+  displayName: 'Check ZIP contents'
 
 # Deploy ins Function App
 - task: AzureFunctionApp@1
@@ -26,5 +30,3 @@ steps:
     appType: 'functionApp'
     appName: 'az400-123456789-func1'
     package: '$(Build.ArtifactStagingDirectory)/functions.zip'
-
-
