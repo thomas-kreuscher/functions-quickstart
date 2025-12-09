@@ -1,7 +1,7 @@
 trigger:
   branches:
     include:
-      - master   # oder main
+      - master   # oder main, je nach Fork
 
 pool:
   name: SelfHostedPool
@@ -10,10 +10,10 @@ steps:
 - script: echo "Deploying commit $(Build.SourceVersion) to Function App"
   displayName: 'Agent-Check'
 
-# Paket erstellen: nur die relevanten Dateien zippen
+# Paket erstellen: gesamten Repo-Inhalt zippen, host.json muss im Root sein
 - task: ArchiveFiles@2
   inputs:
-    rootFolderOrFile: '$(System.DefaultWorkingDirectory)'   # hier liegt host.json
+    rootFolderOrFile: '$(System.DefaultWorkingDirectory)'
     includeRootFolder: false
     archiveType: 'zip'
     archiveFile: '$(Build.ArtifactStagingDirectory)/functions.zip'
@@ -23,10 +23,11 @@ steps:
 - script: powershell -Command "Expand-Archive -Path $(Build.ArtifactStagingDirectory)/functions.zip -DestinationPath $(Build.ArtifactStagingDirectory)/unzipped; Get-ChildItem -Recurse $(Build.ArtifactStagingDirectory)/unzipped"
   displayName: 'Check ZIP contents'
 
-# Deploy ins Function App
+# Deploy ins Azure Function App
 - task: AzureFunctionApp@1
   inputs:
-    azureSubscription: 'AzureConnection'
+    azureSubscription: 'AzureConnection'   # Name deiner Service Connection
     appType: 'functionApp'
     appName: 'az400-123456789-func1'
     package: '$(Build.ArtifactStagingDirectory)/functions.zip'
+
