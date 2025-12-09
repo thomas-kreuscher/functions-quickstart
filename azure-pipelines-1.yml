@@ -1,7 +1,7 @@
 trigger:
   branches:
     include:
-      - master   # oder main
+      - master  # oder main
 
 pool:
   name: SelfHostedPool
@@ -10,26 +10,75 @@ steps:
 - script: echo "Deploying commit $(Build.SourceVersion) to Function App"
   displayName: 'Agent-Check'
 
-# Paket erstellen: Inhalte des Repo-Roots zippen
+# Staging vorbereiten (leer)
+- powershell: |
+    $staging = "$(Build.ArtifactStagingDirectory)\functions_staging"
+    if (Test-Path $staging) { Remove-Item $staging -Recurse -Force }
+    New-Item -ItemType Directory -Path $staging | Out-Null
+  displayName: 'Prepare clean staging'
+
+# Nur relevante Dateien ins Staging kopieren
+- powershell: |
+    $src = "$(Build.SourcesDirectory)"
+    $dst = "$(Build.ArtifactStagingDirectory)\functions_staging"
+    # host.json kopieren
+    Copy-Item -Path (Join-Path $src 'host.json') -Destination $dst -Force
+    # Funktionsordner kopieren (C#, JS, F#)
+    $functionDirs = @('HttpTriggerCSharp1','HttpTriggerJS1','HttpTriggerFSharp1')
+    foreach ($d in $functionDirs) {
+      $path = Join-Path $src $d
+      if (Test-Path $path) {
+        Copy-Item -Path $path -Destination (Join-Path $dst $d) -Recurse -Force
+      }
+    }
+  displayName: 'Copy functions to staging'
+
+# Validierung: host.json im Root und mindestens eine function.json vorhanden
+- powershell: |
+    $dst = "$(Build.ArtifactStagingDirectory)\functions_staging"
+    $hostJson = Join-Path $dst 'host.json'
+    if (-not (Test-Path $hostJson)) {
+      Write-Error "Validation failed: host.json not found in ZIP root."
+    }
+    $funcJsons = Get-ChildItem -Path $dst -Recurse -Filter 'function.json'
+    if ($funcJsons.Count -lt 1) {
+      Write-Error "Validation failed: no function.json found in functions folders."
+    }
+    Write-Host "Validation passed: host.json and function.json files present."
+    Get-ChildItem -Path $dst -Recurse
+  displayName: 'Validate staging structure'
+
+# ZIP aus dem Staging bauen (Root = host.json + Funktionsordner)
 - task: ArchiveFiles@2
   inputs:
-    rootFolderOrFile: '$(Build.SourcesDirectory)'   # hier liegt host.json direkt
-    includeRootFolder: false                        # verhindert zusätzlichen Ordner im ZIP
+    rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/functions_staging'
+    includeRootFolder: false
     archiveType: 'zip'
     archiveFile: '$(Build.ArtifactStagingDirectory)/functions.zip'
     replaceExistingArchive: true
+  displayName: 'Archive staging to ZIP'
 
 # Debug: ZIP-Inhalt prüfen
-- script: powershell -Command "Expand-Archive -Path $(Build.ArtifactStagingDirectory)/functions.zip -DestinationPath $(Build.ArtifactStagingDirectory)/unzipped; Get-ChildItem -Recurse $(Build.ArtifactStagingDirectory)/unzipped"
+- powershell: |
+    $zip = "$(Build.ArtifactStagingDirectory)\functions.zip"
+    $unzip = "$(Build.ArtifactStagingDirectory)\unzipped"
+    if (Test-Path $unzip) { Remove-Item $unzip -Recurse -Force }
+    Expand-Archive -Path $zip -DestinationPath $unzip
+    Get-ChildItem -Recurse $unzip
+    if (-not (Test-Path (Join-Path $unzip 'host.json'))) {
+      Write-Error "ZIP check failed: host.json is not at ZIP root."
+    }
   displayName: 'Check ZIP contents'
 
-# Deploy ins Azure Function App
+# Deploy ins Azure Function App per ZipDeploy
 - task: AzureFunctionApp@1
   inputs:
-    azureSubscription: 'AzureConnection'   # Name deiner Service Connection
+    azureSubscription: 'AzureConnection'
     appType: 'functionApp'
     appName: 'az400-123456789-func1'
     package: '$(Build.ArtifactStagingDirectory)/functions.zip'
+  displayName: 'Deploy to Azure Function App'
+
 
 
 
