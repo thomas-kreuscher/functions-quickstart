@@ -10,14 +10,14 @@ steps:
 - script: echo "Deploying commit $(Build.SourceVersion) to Function App"
   displayName: 'Agent-Check'
 
-# ZIP manuell erstellen: host.json + Funktionsordner direkt ins ZIP-Root
-- powershell: |
-    Add-Type -AssemblyName System.IO.Compression.FileSystem
-    $source = "$(System.DefaultWorkingDirectory)"
-    $destination = "$(Build.ArtifactStagingDirectory)\functions.zip"
-    if (Test-Path $destination) { Remove-Item $destination }
-    [System.IO.Compression.ZipFile]::CreateFromDirectory($source, $destination)
-  displayName: 'Create ZIP with correct structure'
+# Paket erstellen: Inhalte des Repo-Roots zippen
+- task: ArchiveFiles@2
+  inputs:
+    rootFolderOrFile: '$(Build.SourcesDirectory)'   # hier liegt host.json direkt
+    includeRootFolder: false                        # verhindert zusätzlichen Ordner im ZIP
+    archiveType: 'zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/functions.zip'
+    replaceExistingArchive: true
 
 # Debug: ZIP-Inhalt prüfen
 - script: powershell -Command "Expand-Archive -Path $(Build.ArtifactStagingDirectory)/functions.zip -DestinationPath $(Build.ArtifactStagingDirectory)/unzipped; Get-ChildItem -Recurse $(Build.ArtifactStagingDirectory)/unzipped"
@@ -26,10 +26,11 @@ steps:
 # Deploy ins Azure Function App
 - task: AzureFunctionApp@1
   inputs:
-    azureSubscription: 'AzureConnection'
+    azureSubscription: 'AzureConnection'   # Name deiner Service Connection
     appType: 'functionApp'
     appName: 'az400-123456789-func1'
     package: '$(Build.ArtifactStagingDirectory)/functions.zip'
+
 
 
 
