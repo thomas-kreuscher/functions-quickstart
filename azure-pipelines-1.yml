@@ -10,11 +10,11 @@ steps:
 - script: echo "Deploying commit $(Build.SourceVersion) to Function App"
   displayName: 'Agent-Check'
 
-# Paket erstellen: gesamten Repo-Inhalt zippen
+# Paket erstellen: nur die Function-Dateien zippen
 - task: ArchiveFiles@2
   inputs:
-    rootFolderOrFile: '$(System.DefaultWorkingDirectory)'
-    includeRootFolder: false
+    rootFolderOrFile: '$(System.DefaultWorkingDirectory)/HttpTriggerCSharp1'  # oder anderer Funktionsordner
+    includeRootFolder: true
     archiveType: 'zip'
     archiveFile: '$(Build.ArtifactStagingDirectory)/functions.zip'
     replaceExistingArchive: true
@@ -26,6 +26,5 @@ steps:
     appType: 'functionApp'
     appName: 'az400-123456789-func1'
     package: '$(Build.ArtifactStagingDirectory)/functions.zip'
-
 
 
