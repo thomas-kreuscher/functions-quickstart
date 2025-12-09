@@ -1,9 +1,25 @@
-trigger: none
+trigger:
+  branches:
+    include:
+      - master   # oder main
 
 pool:
   name: SelfHostedPool
 
 steps:
-- script: echo "Hello from agent-thomas"
-  displayName: 'Test Agent Verbindung'
+- task: UseDotNet@2
+  inputs:
+    packageType: 'sdk'
+    version: '8.0'   # gleiche Version wie deine Function App Runtime
+
+- script: dotnet build
+  displayName: 'Build Function App'
+
+- task: AzureFunctionApp@1
+  inputs:
+    azureSubscription: 'AzureConnection'   # Name deiner Service Connection
+    appType: 'functionApp'
+    appName: 'az400-123456789-func1'
+    package: '$(System.DefaultWorkingDirectory)/**/*.zip'
+
 
