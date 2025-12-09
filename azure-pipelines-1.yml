@@ -1,25 +1,23 @@
 trigger:
   branches:
     include:
-      - master   # oder main
+      - master   # oder main, je nach Fork-Branch
 
 pool:
-  name: SelfHostedPool
+  name: SelfHostedPool   # dein eigener Agent
 
 steps:
-- task: UseDotNet@2
-  inputs:
-    packageType: 'sdk'
-    version: '8.0'   # gleiche Version wie deine Function App Runtime
+# Optionaler Test-Output, damit du im Log sofort erkennst, dass der Agent läuft
+- script: echo "Starte Deployment von Commit $(Build.SourceVersion)"
+  displayName: 'Agent-Check'
 
-- script: dotnet build
-  displayName: 'Build Function App'
-
+# Deploy direkt aus dem Repo-Inhalt
 - task: AzureFunctionApp@1
   inputs:
     azureSubscription: 'AzureConnection'   # Name deiner Service Connection
     appType: 'functionApp'
     appName: 'az400-123456789-func1'
-    package: '$(System.DefaultWorkingDirectory)/**/*.zip'
+    package: '$(System.DefaultWorkingDirectory)'
+
 
 
