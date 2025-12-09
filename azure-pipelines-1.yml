@@ -1,23 +1,31 @@
 trigger:
   branches:
     include:
-      - master   # oder main, je nach Fork-Branch
+      - master   # oder main
 
 pool:
-  name: SelfHostedPool   # dein eigener Agent
+  name: SelfHostedPool
 
 steps:
-# Optionaler Test-Output, damit du im Log sofort erkennst, dass der Agent läuft
-- script: echo "Starte Deployment von Commit $(Build.SourceVersion)"
+- script: echo "Deploying commit $(Build.SourceVersion) to Function App"
   displayName: 'Agent-Check'
 
-# Deploy direkt aus dem Repo-Inhalt
+# Paket erstellen: gesamten Repo-Inhalt zippen
+- task: ArchiveFiles@2
+  inputs:
+    rootFolderOrFile: '$(System.DefaultWorkingDirectory)'
+    includeRootFolder: false
+    archiveType: 'zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/functions.zip'
+    replaceExistingArchive: true
+
+# Deploy ins Function App
 - task: AzureFunctionApp@1
   inputs:
-    azureSubscription: 'AzureConnection'   # Name deiner Service Connection
+    azureSubscription: 'AzureConnection'
     appType: 'functionApp'
     appName: 'az400-123456789-func1'
-    package: '$(System.DefaultWorkingDirectory)'
+    package: '$(Build.ArtifactStagingDirectory)/functions.zip'
 
 
 
