@@ -1,0 +1,9 @@
+trigger: none
+
+pool:
+  name: SelfHostedPool
+
+steps:
+- script: echo "Hello from agent-thomas"
+  displayName: 'Test Agent Verbindung'
+
