@@ -1,7 +1,7 @@
 trigger:
   branches:
     include:
-      - master   # oder main
+      - master
 
 pool:
   name: SelfHostedPool
@@ -10,14 +10,26 @@ steps:
 - script: echo "Deploying commit $(Build.SourceVersion) to Function App"
   displayName: 'Agent-Check'
 
-# Paket erstellen: Inhalte des Repo-Roots zippen
+# Staging vorbereiten
+- powershell: |
+    $staging = "$(Build.ArtifactStagingDirectory)\functions_staging\.azurefunctions"
+    if (Test-Path $staging) { Remove-Item $staging -Recurse -Force }
+    New-Item -ItemType Directory -Path $staging | Out-Null
+    Copy-Item -Path "$(Build.SourcesDirectory)\host.json" -Destination $staging -Force
+    Copy-Item -Path "$(Build.SourcesDirectory)\HttpTriggerCSharp1" -Destination $staging -Recurse -Force
+    Copy-Item -Path "$(Build.SourcesDirectory)\HttpTriggerJS1" -Destination $staging -Recurse -Force
+    Copy-Item -Path "$(Build.SourcesDirectory)\HttpTriggerFSharp1" -Destination $staging -Recurse -Force
+  displayName: 'Prepare .azurefunctions staging'
+
+# ZIP erstellen
 - task: ArchiveFiles@2
   inputs:
-    rootFolderOrFile: '$(Build.SourcesDirectory)'
+    rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/functions_staging'
     includeRootFolder: false
     archiveType: 'zip'
     archiveFile: '$(Build.ArtifactStagingDirectory)/functions.zip'
     replaceExistingArchive: true
+  displayName: 'Archive staging to ZIP'
 
 # Debug: ZIP-Inhalt prüfen
 - powershell: |
@@ -25,7 +37,7 @@ steps:
     Get-ChildItem -Recurse "$(Build.ArtifactStagingDirectory)/unzipped"
   displayName: 'Check ZIP contents'
 
-# Deploy via Azure CLI (funktioniert auch bei Linux Consumption)
+# Deploy via Azure CLI
 - task: AzureCLI@2
   inputs:
     azureSubscription: 'AzureConnection'
@@ -37,6 +49,7 @@ steps:
         --resource-group az400-123456789-func1_rg `
         --name az400-123456789-func1 `
         --src $zipPath
+
 
 
 
