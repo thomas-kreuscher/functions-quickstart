@@ -12,14 +12,16 @@ steps:
 
 # Staging vorbereiten
 - powershell: |
-    $staging = "$(Build.ArtifactStagingDirectory)\functions_staging\.azurefunctions"
+    $staging = "$(Build.ArtifactStagingDirectory)\functions_staging"
     if (Test-Path $staging) { Remove-Item $staging -Recurse -Force }
     New-Item -ItemType Directory -Path $staging | Out-Null
-    Copy-Item -Path "$(Build.SourcesDirectory)\host.json" -Destination $staging -Force
-    Copy-Item -Path "$(Build.SourcesDirectory)\HttpTriggerCSharp1" -Destination $staging -Recurse -Force
-    Copy-Item -Path "$(Build.SourcesDirectory)\HttpTriggerJS1" -Destination $staging -Recurse -Force
-    Copy-Item -Path "$(Build.SourcesDirectory)\HttpTriggerFSharp1" -Destination $staging -Recurse -Force
-  displayName: 'Prepare .azurefunctions staging'
+    # host.json ins Root kopieren
+    Copy-Item "$(Build.SourcesDirectory)\host.json" $staging -Force
+    # Funktionsordner kopieren
+    Copy-Item "$(Build.SourcesDirectory)\HttpTriggerCSharp1" $staging -Recurse -Force
+    Copy-Item "$(Build.SourcesDirectory)\HttpTriggerJS1" $staging -Recurse -Force
+    Copy-Item "$(Build.SourcesDirectory)\HttpTriggerFSharp1" $staging -Recurse -Force
+  displayName: 'Prepare staging with host.json at root'
 
 # ZIP erstellen
 - task: ArchiveFiles@2
