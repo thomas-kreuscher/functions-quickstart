@@ -1,7 +1,7 @@
 trigger:
   branches:
     include:
-      - master   # oder main, je nach Fork
+      - master   # oder main
 
 pool:
   name: SelfHostedPool
@@ -10,7 +10,7 @@ steps:
 - script: echo "Deploying commit $(Build.SourceVersion) to Function App"
   displayName: 'Agent-Check'
 
-# Paket erstellen: gesamten Repo-Inhalt zippen, host.json muss im Root sein
+# Paket erstellen: zippe den Repo-Inhalt, host.json liegt im Root
 - task: ArchiveFiles@2
   inputs:
     rootFolderOrFile: '$(System.DefaultWorkingDirectory)'
@@ -30,4 +30,5 @@ steps:
     appType: 'functionApp'
     appName: 'az400-123456789-func1'
     package: '$(Build.ArtifactStagingDirectory)/functions.zip'
+
 
