@@ -22,7 +22,7 @@ steps:
 # Deploy zur Function App
 - task: AzureFunctionApp@1
   inputs:
-    azureSubscription: 'AzureConnection'
+    azureSubscription: 'az400-functions-sp-connection'
     appType: 'functionApp'
     appName: 'az400-123456789-func1-win'
     package: '$(Build.ArtifactStagingDirectory)/functions.zip'
