@@ -10,14 +10,19 @@ steps:
     packageType: 'sdk'
     version: '8.x'
 
-- task: DotNetCoreCLI@2
+# Packe die Function-Dateien ins ZIP
+- task: ArchiveFiles@2
   inputs:
-    command: 'build'
-    projects: '**/*.csproj'
+    rootFolderOrFile: '$(System.DefaultWorkingDirectory)'
+    includeRootFolder: false
+    archiveType: 'zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/functions.zip'
+    replaceExistingArchive: true
 
+# Deploy zur Function App
 - task: AzureFunctionApp@1
   inputs:
     azureSubscription: 'AzureConnection'
     appType: 'functionApp'
     appName: 'az400-123456789-func1-win'
-    package: '$(System.DefaultWorkingDirectory)/**/*.zip'
+    package: '$(Build.ArtifactStagingDirectory)/functions.zip'
