@@ -3,8 +3,10 @@ trigger:
 
 pool:
   name: 'SelfHostedPool'
+  # alternativ: vmImage: 'windows-latest' für Microsoft-hosted Agent
 
 steps:
+# Installiere .NET SDK 8.x (falls benötigt für Build/Tools)
 - task: UseDotNet@2
   inputs:
     packageType: 'sdk'
@@ -25,4 +27,5 @@ steps:
     azureSubscription: 'az400-functions-sp-connection'
     appType: 'functionApp'
     appName: 'az400-123456789-func1-win'
+    resourceGroupName: 'az400-123456789-func1-win_group'
     package: '$(Build.ArtifactStagingDirectory)/functions.zip'
