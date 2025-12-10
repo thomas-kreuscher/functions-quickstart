@@ -1,21 +1,21 @@
+#r "Newtonsoft.Json"
 using System.Net;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Primitives;
+using Newtonsoft.Json;
 
-public static async Task<HttpResponseMessage> Run(HttpRequestMessage req, TraceWriter log)
+public static async Task<IActionResult> Run(HttpRequest req, ILogger log)
 {
-    log.Info("C# HTTP trigger function processed a request.");
+    log.LogInformation("C# HTTP trigger function processed a request.");
 
-    // parse query parameter
-    string name = req.GetQueryNameValuePairs()
-        .FirstOrDefault(q => string.Compare(q.Key, "name", true) == 0)
-        .Value;
+    string name = req.Query["name"];
 
-    // Get request body
-    dynamic data = await req.Content.ReadAsAsync<object>();
+    if (string.IsNullOrEmpty(name))
+    {
+        using var reader = new StreamReader(req.Body);
+        var data = JsonConvert.DeserializeObject<dynamic>(await reader.ReadToEndAsync());
+        name = data?.name;
+    }
 
-    // Set name to query string or body data
-    name = name ?? data?.name;
-
-    return name == null
-        ? req.CreateResponse(HttpStatusCode.BadRequest, "Please pass a name on the query string or in the request body")
-        : req.CreateResponse(HttpStatusCode.OK, "Hello " + name);
+    return new OkObjectResult($"Hello, {name}. This HTTP triggered function executed successfully.");
 }
