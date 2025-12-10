@@ -25,10 +25,10 @@ steps:
 - task: AzureCLI@2
   inputs:
     azureSubscription: 'az400-functions-sp-connection'
-    scriptType: 'ps'              # PowerShell statt bash
+    scriptType: 'ps'              # PowerShell für Windows-Agent
     scriptLocation: 'inlineScript'
     inlineScript: |
-      Write-Host "🔍 Debug-Check: Function App anzeigen"
+      Write-Host "Debug-Check: Function App anzeigen"
       az functionapp show `
         --name az400-123456789-func1-win `
         --resource-group az400-123456789-func1-win_group `
