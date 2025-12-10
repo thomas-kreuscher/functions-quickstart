@@ -25,13 +25,13 @@ steps:
 - task: AzureCLI@2
   inputs:
     azureSubscription: 'az400-functions-sp-connection'
-    scriptType: 'bash'
+    scriptType: 'ps'              # PowerShell statt bash
     scriptLocation: 'inlineScript'
     inlineScript: |
-      echo "🔍 Debug-Check: Function App anzeigen"
-      az functionapp show \
-        --name az400-123456789-func1-win \
-        --resource-group az400-123456789-func1-win_group \
+      Write-Host "🔍 Debug-Check: Function App anzeigen"
+      az functionapp show `
+        --name az400-123456789-func1-win `
+        --resource-group az400-123456789-func1-win_group `
         --subscription 0666947c-aea5-4e1b-88ea-7e80580c95e8
 
 # Deploy zur Function App
@@ -42,4 +42,5 @@ steps:
     appName: 'az400-123456789-func1-win'
     resourceGroupName: 'az400-123456789-func1-win_group'
     package: '$(Build.ArtifactStagingDirectory)/functions.zip'
+
 
