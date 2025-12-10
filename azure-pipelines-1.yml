@@ -1,61 +1,46 @@
 trigger:
-  branches:
-    include:
-      - master
+- master
 
 pool:
-  name: SelfHostedPool
+  name: 'SelfHostedPool'
+  # alternativ: vmImage: 'windows-latest' für Microsoft-hosted Agent
 
 steps:
-- script: echo "Deploying commit $(Build.SourceVersion) to Function App"
-  displayName: 'Agent-Check'
+# Installiere .NET SDK 8.x (falls benötigt für Build/Tools)
+- task: UseDotNet@2
+  inputs:
+    packageType: 'sdk'
+    version: '8.x'
 
-# Staging vorbereiten
-- powershell: |
-    $staging = "$(Build.ArtifactStagingDirectory)\functions_staging"
-    if (Test-Path $staging) { Remove-Item $staging -Recurse -Force }
-    New-Item -ItemType Directory -Path $staging | Out-Null
-    # host.json ins Root kopieren
-    Copy-Item "$(Build.SourcesDirectory)\host.json" $staging -Force
-    # Funktionsordner kopieren
-    Copy-Item "$(Build.SourcesDirectory)\HttpTriggerCSharp1" $staging -Recurse -Force
-    Copy-Item "$(Build.SourcesDirectory)\HttpTriggerJS1" $staging -Recurse -Force
-    Copy-Item "$(Build.SourcesDirectory)\HttpTriggerFSharp1" $staging -Recurse -Force
-  displayName: 'Prepare staging with host.json at root'
-
-# ZIP erstellen
+# Packe die Function-Dateien ins ZIP
 - task: ArchiveFiles@2
   inputs:
-    rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/functions_staging'
+    rootFolderOrFile: '$(System.DefaultWorkingDirectory)'
     includeRootFolder: false
     archiveType: 'zip'
     archiveFile: '$(Build.ArtifactStagingDirectory)/functions.zip'
     replaceExistingArchive: true
-  displayName: 'Archive staging to ZIP'
 
-# Debug: ZIP-Inhalt prüfen
-- powershell: |
-    Expand-Archive -Path "$(Build.ArtifactStagingDirectory)/functions.zip" -DestinationPath "$(Build.ArtifactStagingDirectory)/unzipped"
-    Get-ChildItem -Recurse "$(Build.ArtifactStagingDirectory)/unzipped"
-  displayName: 'Check ZIP contents'
-
-# Deploy via Azure CLI
+# 🔧 Debug-Check: Funktion App anzeigen
 - task: AzureCLI@2
   inputs:
-    azureSubscription: 'AzureConnection'
-    scriptType: 'ps'
+    azureSubscription: 'az400-functions-sp-connection'
+    scriptType: 'ps'              # PowerShell für Windows-Agent
     scriptLocation: 'inlineScript'
     inlineScript: |
-      $zipPath = "$(Build.ArtifactStagingDirectory)/functions.zip"
-      az functionapp deployment source config-zip `
-        --resource-group az400-123456789-func1_rg `
-        --name az400-123456789-func1 `
-        --src $zipPath
+      Write-Host "Debug-Check: Function App anzeigen"
+      az functionapp show `
+        --name az400-123456789-func1-win `
+        --resource-group az400-123456789-func1-win_group `
+        --subscription 0666947c-aea5-4e1b-88ea-7e80580c95e8
 
-
-
-
-
-
+# Deploy zur Function App
+- task: AzureFunctionApp@1
+  inputs:
+    azureSubscription: 'az400-functions-sp-connection'
+    appType: 'functionApp'
+    appName: 'az400-123456789-func1-win'
+    resourceGroupName: 'az400-123456789-func1-win_group'
+    package: '$(Build.ArtifactStagingDirectory)/functions.zip'
 
 
