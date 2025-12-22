@@ -10,8 +10,11 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_FUNCTIONAPP_PACKAGE_PATH: '.' # set this to the path to your web app project, defaults to the repository root
-  DOTNET_VERSION: '8.0.x' # set this to the dotnet version to use
+  # KRITIK: Hier lag der Fehler. '.' sucht im Root, aber dort ist kein Projekt.
+  # Für das Functions-Quickstart Sample ist der Pfad meistens 'CSharp' oder 'DotNet'.
+  # Bitte prüfe in deinem GitHub Repo, wie der Ordner genau heißt!
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: 'CSharp' 
+  DOTNET_VERSION: '8.0.x' 
 
 jobs:
   build-and-deploy:
@@ -29,6 +32,7 @@ jobs:
       - name: 'Resolve Project Dependencies Using Dotnet'
         shell: pwsh
         run: |
+          # Wir springen in den Unterordner, in dem die .csproj liegt
           pushd './${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}'
           dotnet build --configuration Release --output ./output
           popd
@@ -39,5 +43,6 @@ jobs:
         with:
           app-name: 'az400-9940427-func1'
           slot-name: 'Production'
+          # Das Paket liegt nun im Unterordner/output
           package: '${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}/output'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_69C37F45A6704DF08E5C8B1F7619E26F }}
